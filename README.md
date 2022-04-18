@@ -76,6 +76,8 @@ tracing.DoInSpan(ctx, "sub operation2", func(ctx context.Context, span tracing.S
 })
 ```
 
+See (and run if you want) an [example instrumented application](https://github.com/bwplotka/tracing-go/blob/e4932502118d0cf62706a342c04107b0727cd230/tracing/tracing_e2e_test.go#L78) using our docker based [e2e suite](https://github.com/efficientgo/e2e).  
+
 ## Credits
 
 * Initial version of this library was written for @AnaisUrlichs and @bwplotka demo of [monitoring Argo Rollout jobs](https://github.com/AnaisUrlichs/observe-argo-rollout/blob/main/app/tracing/tracing.go)
