@@ -8,7 +8,7 @@ NOTE: This project follows semver, but it is in experimental v0.x.y phase. API m
 
 ## Background
 
-This library was born from the fact that the current state of Go clients for tracing are far from perfection. While [OpenTracing](https://github.com/opentracing/opentracing-go) Go client was straightforward to use and started new pattern of operating with spans, currently it is deprecated with other less easy to use options e.g. [Otel Go SDK](https://pkg.go.dev/go.opentelemetry.io/otel).
+This library was born from the fact that the current state of Go clients for tracing are far from perfection.
 
 The success of the [Prometheus client_golang library](https://github.com/prometheus/client_golang) (this package is used more than [51,000 repositories](https://github.com/prometheus/client_golang/network/dependents?package_id=UGFja2FnZS0yMjY0ODEyOTE4)) was in some way thanks to the simplicity, stability and efficiency of that Go client for metrics. Strict compatibility, clear API and error semantics, no scope creep and single module are the things that enabled massive value to so many people and organizations in the community. The key is to make the best user (developer) experience possible.
 
