@@ -33,12 +33,12 @@ First, create tracer with exporter(s) you want e.g. Jaeger HTTP Thrift.
 // import "github.com/bwplotka/tracing-go/tracing/exporters/jaeger"
 
 tr, closeFn, err := tracing.NewTracer(
-		tracing.WithServiceName("app"),
-		tracing.WithExporter(jaeger.Exporter(
-			jaeger.WithCollectorEndpoint(jaegerEndpoint),
-		)),
-		// Further options.
-	)
+	tracing.WithServiceName("app"),
+	tracing.WithExporter(jaeger.Exporter(
+		jaeger.WithCollectorEndpoint(jaegerEndpoint),
+	)),
+	// Further options.
+)
 if err != nil {
 	// Handle err...
 }
@@ -58,8 +58,8 @@ defer root.End()
 // ...
 ctx, span := tracing.StartSpan(ctx, "dummy operation")
 defer func() {
-  span.SetAttributes("err", err)
-  span.End()
+	span.SetAttributes("err", err)
+	span.End()
 }()
 ```
 
@@ -69,7 +69,7 @@ Use `DoInSpan` if you want to do something in the dedicated span.
 // import "github.com/bwplotka/tracing-go/tracing"
 
 tracing.DoInSpan(ctx, "sub operation1", func(ctx context.Context, span tracing.Span) {
-    // ...
+	// ...
 })
 tracing.DoInSpan(ctx, "sub operation2", func(ctx context.Context, span tracing.Span) { 
 	// ...
