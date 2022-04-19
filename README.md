@@ -8,7 +8,7 @@ NOTE: This project follows semver, but it is in experimental v0.x.y phase. API m
 
 ## Background
 
-This library was born from the fact that the current state of Go clients for tracing are far from perfection.
+This library was born from the fact that the current state of Go clients for tracing are far from perfection, especially on simplicity and API front.
 
 The success of the [Prometheus client_golang library](https://github.com/prometheus/client_golang) (this package is used more than [51,000 repositories](https://github.com/prometheus/client_golang/network/dependents?package_id=UGFja2FnZS0yMjY0ODEyOTE4)) was in some way thanks to the simplicity, stability and efficiency of that Go client for metrics. Strict compatibility, clear API and error semantics, no scope creep and single module are the things that enabled massive value to so many people and organizations in the community. The key is to make the best user (developer) experience possible.
 
@@ -16,13 +16,15 @@ The above learnings was what motivated the creation of `github.com/bwplotka/trac
 
 ## Features
 
+* No global state
 * Manual span instrumentation with contextualized tracer and clear error semantics.
+  * You can only create sub-spans from context, (only one way of creating spans).
 * Export of traces to the desired tracing backend or collector:
   * Using [gRPC OTLP](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/otlp.md) protocol
   * Using Jaeger Thrift Collector, because Jaeger does [not support OTLP yet](https://github.com/jaegertracing/jaeger/issues/3625) 🙃
-  * Writing to file e.g stdout/stderr.
+  * Writing to file e.g. stdout/stderr.
 
-At least for now, this project wraps [multiple https://github.com/open-telemetry/opentelemetry-go](https://github.com/open-telemetry/opentelemetry-go) modules, (almost) fully hiding those from the public interface. Yet, if you import `github.com/bwplotka/tracing-go` module you will transiently import OpenTelemetry modules.
+This project wraps [multiple https://github.com/open-telemetry/opentelemetry-go](https://github.com/open-telemetry/opentelemetry-go) modules, (almost) fully hiding those from the public interface. Yet, if you import `github.com/bwplotka/tracing-go` module you will transiently import OpenTelemetry modules.
 
 ## Usage
 
@@ -77,6 +79,10 @@ tracing.DoInSpan(ctx, "sub operation2", func(ctx context.Context, span tracing.S
 ```
 
 See (and run if you want) an [example instrumented application](https://github.com/bwplotka/tracing-go/blob/e4932502118d0cf62706a342c04107b0727cd230/tracing/tracing_e2e_test.go#L78) using our docker based [e2e suite](https://github.com/efficientgo/e2e).  
+
+E2e example should sent spans to in-memory Jaeger and present view like this: 
+
+![jaeger](tracing-go-jaeger.png)
 
 ## Credits
 
