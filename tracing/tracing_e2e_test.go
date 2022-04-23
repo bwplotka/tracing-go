@@ -19,10 +19,7 @@ import (
 //nolint
 func dummyOperation(ctx context.Context) (err error) {
 	ctx, span := tracing.StartSpan(ctx, "dummy operation")
-	defer func() {
-		span.SetAttributes("err", err)
-		span.End()
-	}()
+	defer func() { span.End(err) }()
 
 	alloc := make([]byte, 1e6)
 	iters := int(rand.Float64() * 100)
@@ -31,11 +28,13 @@ func dummyOperation(ctx context.Context) (err error) {
 		_ = fmt.Sprintf("doing stuff! %+v", alloc)
 	}
 
-	tracing.DoInSpan(ctx, "sub operation1", func(ctx context.Context, span tracing.Span) {
+	tracing.DoInSpan(ctx, "sub operation1", func(ctx context.Context, span tracing.Span) error {
 		time.Sleep(1200 * time.Millisecond)
+		return nil
 	})
-	tracing.DoInSpan(ctx, "sub operation2", func(ctx context.Context, span tracing.Span) {
+	tracing.DoInSpan(ctx, "sub operation2", func(ctx context.Context, span tracing.Span) error {
 		time.Sleep(300 * time.Millisecond)
+		return nil
 	})
 
 	switch rand.Intn(3) {
@@ -52,9 +51,7 @@ func dummyOperation(ctx context.Context) (err error) {
 func runInstrumentedApp(t *testing.T, jaegerEndpoint string) {
 	tr, closeFn, err := tracing.NewTracer(
 		tracing.WithServiceName("app"),
-		tracing.WithExporter(jaeger.Exporter(
-			jaeger.WithCollectorEndpoint(jaegerEndpoint),
-		)),
+		tracing.WithExporter(jaeger.Exporter(jaegerEndpoint)),
 	)
 	testutil.Ok(t, err)
 	t.Cleanup(func() {
@@ -62,7 +59,7 @@ func runInstrumentedApp(t *testing.T, jaegerEndpoint string) {
 	})
 
 	ctx, root := tr.StartSpan("app")
-	defer root.End()
+	defer root.End(nil)
 
 	wg := sync.WaitGroup{}
 	for i := 0; i < 10; i++ {

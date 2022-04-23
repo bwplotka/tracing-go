@@ -16,12 +16,15 @@ type Option struct {
 	otelOpt otlptracegrpc.Option
 }
 
-// Exporter sets the gRPC OTLP exporter builder for spans that can be used in tracing.WithExporter().
-func Exporter(opts ...Option) tracing.ExporterBuilder {
+// Exporter sets the gRPC OTLP exporter builder that builds exporter for spans that can be used in tracing.WithExporter().
+// Endpoint is in form of host:port.
+func Exporter(endpoint string, opts ...Option) tracing.ExporterBuilder {
 	oopts := make([]otlptracegrpc.Option, 0, len(opts))
 	for _, o := range opts {
 		oopts = append(oopts, o.otelOpt)
 	}
+	oopts = append(oopts, otlptracegrpc.WithEndpoint(endpoint))
+
 	return func() (tracing.Exporter, error) {
 		e, err := otlptrace.New(context.TODO(), otlptracegrpc.NewClient(oopts...))
 		if err != nil {
@@ -29,13 +32,6 @@ func Exporter(opts ...Option) tracing.ExporterBuilder {
 		}
 		return e, nil
 	}
-}
-
-// WithEndpoint allows setting the endpoint that the exporter will
-// connect to the collector on. If unset, it will instead try to use
-// connect to DefaultCollectorHost:DefaultCollectorPort.
-func WithEndpoint(endpoint string) Option {
-	return Option{otelOpt: otlptracegrpc.WithEndpoint(endpoint)}
 }
 
 // WithInsecure disables client transport security for the exporter's gRPC connection

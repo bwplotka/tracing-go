@@ -14,11 +14,14 @@ type Option struct {
 }
 
 // Exporter sets the Jaeger exporter builder for spans that can be used in tracing.WithExporter().
-func Exporter(opts ...Option) tracing.ExporterBuilder {
+// Endpoint is in form of host:port.
+func Exporter(endpoint string, opts ...Option) tracing.ExporterBuilder {
 	jopts := make([]jaeger.CollectorEndpointOption, 0, len(opts))
 	for _, o := range opts {
 		jopts = append(jopts, o.jaegerOpt)
 	}
+	jopts = append(jopts, jaeger.WithEndpoint(endpoint))
+
 	return func() (tracing.Exporter, error) {
 		e, err := jaeger.New(jaeger.WithCollectorEndpoint(jopts...))
 		if err != nil {
@@ -26,13 +29,6 @@ func Exporter(opts ...Option) tracing.ExporterBuilder {
 		}
 		return e, nil
 	}
-}
-
-// WithCollectorEndpoint allows setting the endpoint that the exporter will
-// connect to the collector on.
-// "http://localhost:14268/api/traces" will be used by default.
-func WithCollectorEndpoint(endpoint string) Option {
-	return Option{jaegerOpt: jaeger.WithEndpoint(endpoint)}
 }
 
 // WithHTTPClient sets the http client to be used to make request to the collector endpoint.

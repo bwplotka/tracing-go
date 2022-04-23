@@ -3,30 +3,38 @@ package tracing
 import (
 	"context"
 
+	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 )
 
 const instrumentationID = "tracing-go"
 
 // StartSpan creates spans using tracer in the context.
-// NOTE: Span has to be explicitly ended if you want to export it.
+// WARNING: ctx has to be chained to root Tracer.StartSpan or Tracer.DoInSpan.
 func StartSpan(ctx context.Context, spanName string) (context.Context, Span) {
 	sctx, s := trace.SpanFromContext(ctx).TracerProvider().Tracer(instrumentationID).Start(ctx, spanName)
 	return sctx, &span{Span: s}
 }
 
 // DoInSpan does `f` function inside span using tracer in the context.
-func DoInSpan(ctx context.Context, spanName string, f func(context.Context, Span)) {
+// WARNING: ctx has to be chained to root Tracer.StartSpan or Tracer.DoInSpan.
+func DoInSpan(ctx context.Context, spanName string, f func(context.Context, Span) error) {
 	sctx, s := StartSpan(ctx, spanName)
-	f(sctx, s)
-	s.End()
+	s.End(f(sctx, s))
 }
 
 type span struct {
 	trace.Span
 }
 
-func (s *span) End() { s.Span.End() }
+func (s *span) End(err error) {
+	if err != nil {
+		s.Span.SetStatus(codes.Error, err.Error())
+	} else {
+		s.Span.SetStatus(codes.Ok, "")
+	}
+	s.Span.End()
+}
 
 func (s *span) AddEvent(name string, keyvals ...interface{}) {
 	s.Span.AddEvent(name, trace.WithAttributes(kvToAttr(keyvals...)...))
@@ -44,7 +52,7 @@ type Span interface {
 	// is called. Therefore, updates to the Span are not allowed after this
 	// method has been called.
 	// TODO(bwplotka): Add Set status to End options.
-	End()
+	End(err error)
 
 	// AddEvent adds an event to the span. This was previously (in OpenTracing) known as
 	// structured logs attached to the span.
