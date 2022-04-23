@@ -49,10 +49,7 @@ func dummyOperation(ctx context.Context) (err error) {
 }
 
 func runInstrumentedApp(t *testing.T, jaegerEndpoint string) {
-	tr, closeFn, err := tracing.NewTracer(
-		tracing.WithServiceName("app"),
-		tracing.WithExporter(jaeger.Exporter(jaegerEndpoint)),
-	)
+	tr, closeFn, err := tracing.NewTracer(jaeger.Exporter(jaegerEndpoint), tracing.WithServiceName("app"))
 	testutil.Ok(t, err)
 	t.Cleanup(func() {
 		testutil.Ok(t, closeFn())

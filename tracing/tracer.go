@@ -43,8 +43,7 @@ func WithWriter(w io.Writer) Option {
 	}
 }
 
-// WithExporter sets the exporter builder for spans. E.g. otlp.Exporter and Thrift
-// Alternatively see WithWriter for specific exporters options.
+// WithExporter sets additional exporter builders for spans. E.g. otlp.Exporter and Thrift
 func WithExporter(startExporterFn ExporterBuilder) Option {
 	return func(o *options) {
 		o.newExporterFns = append(o.newExporterFns, startExporterFn)
@@ -82,9 +81,12 @@ type Tracer struct {
 	prop propagation.TextMapPropagator
 }
 
-// NewTracer creates new instance of Tracer with the mandatory close function or error.
-func NewTracer(opts ...Option) (*Tracer, func() error, error) {
-	o := options{}
+// NewTracer creates new instance of Tracer with given exporter builder.
+// Tracer returns tracer and close function that releases all resources or error.
+func NewTracer(exporter ExporterBuilder, opts ...Option) (*Tracer, func() error, error) {
+	o := options{
+		newExporterFns: []ExporterBuilder{exporter},
+	}
 	for _, opt := range opts {
 		opt(&o)
 	}
@@ -96,10 +98,6 @@ func NewTracer(opts ...Option) (*Tracer, func() error, error) {
 			errs.Add(cl())
 		}
 		return errs.Err()
-	}
-
-	if len(o.newExporterFns) == 0 {
-		return nil, closeFn, errors.New("no exporters were configured, use WithOTLP or WithWriter option to set those")
 	}
 
 	svcName := o.svcName
