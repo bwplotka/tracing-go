@@ -156,8 +156,10 @@ func (tr *Tracer) StartSpan(spanName string) (context.Context, Span) {
 	return sctx, &span{Span: s}
 }
 
-// DoInSpan does `f` function inside span using tracer in the context.
-func (tr *Tracer) DoInSpan(spanName string, f func(context.Context, Span) error) {
+// DoInSpan does `f` function that can return error inside span using tracer in the context.
+func (tr *Tracer) DoInSpan(spanName string, f func(context.Context, Span) error) error {
 	sctx, s := tr.StartSpan(spanName)
-	s.End(f(sctx, s))
+	err := f(sctx, s)
+	s.End(err)
+	return err
 }

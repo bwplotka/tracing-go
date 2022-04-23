@@ -28,11 +28,11 @@ func dummyOperation(ctx context.Context) (err error) {
 		_ = fmt.Sprintf("doing stuff! %+v", alloc)
 	}
 
-	tracing.DoInSpan(ctx, "sub operation1", func(ctx context.Context, span tracing.Span) error {
+	_ = tracing.DoInSpan(ctx, "sub operation1", func(ctx context.Context, span tracing.Span) error {
 		time.Sleep(1200 * time.Millisecond)
 		return nil
 	})
-	tracing.DoInSpan(ctx, "sub operation2", func(ctx context.Context, span tracing.Span) error {
+	_ = tracing.DoInSpan(ctx, "sub operation2", func(ctx context.Context, span tracing.Span) error {
 		time.Sleep(300 * time.Millisecond)
 		return nil
 	})

@@ -18,9 +18,11 @@ func StartSpan(ctx context.Context, spanName string) (context.Context, Span) {
 
 // DoInSpan does `f` function inside span using tracer in the context.
 // WARNING: ctx has to be chained to root Tracer.StartSpan or Tracer.DoInSpan.
-func DoInSpan(ctx context.Context, spanName string, f func(context.Context, Span) error) {
+func DoInSpan(ctx context.Context, spanName string, f func(context.Context, Span) error) error {
 	sctx, s := StartSpan(ctx, spanName)
-	s.End(f(sctx, s))
+	err := f(sctx, s)
+	s.End(err)
+	return err
 }
 
 type span struct {
