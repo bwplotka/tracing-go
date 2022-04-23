@@ -8,18 +8,18 @@ NOTE: This project follows semver, but it is in experimental v0.x.y phase. API m
 
 ## Background
 
-This library was born from the fact that the current state of Go clients for tracing are far from perfection, especially on simplicity and API front.
+This library was born from the fact that the current state of Go clients for tracing are far from perfection, especially on simplicity and API front. For now it's meant for demostration purposes on how simple API can be to satisfy most of the tracing needs for the manual instrumentation.
 
-The success of the [Prometheus client_golang library](https://github.com/prometheus/client_golang) (this package is used more than [51,000 repositories](https://github.com/prometheus/client_golang/network/dependents?package_id=UGFja2FnZS0yMjY0ODEyOTE4)) was in some way thanks to the simplicity, stability and efficiency of that Go client for metrics. Strict compatibility, clear API and error semantics, no scope creep and single module are the things that enabled massive value to so many people and organizations in the community. The key is to make the best user (developer) experience possible.
+We can take inspiration from the success of the [Prometheus client_golang library](https://github.com/prometheus/client_golang) (package used in more than [51,000 repositories](https://github.com/prometheus/client_golang/network/dependents?package_id=UGFja2FnZS0yMjY0ODEyOTE4)) was in some way thanks to the simplicity, stability and efficiency of that Go client for metrics. Strict compatibility, clear API and error semantics, no scope creep and single module are the things that enabled massive value to so many people and organizations in the community. The key is to make the best user (end developer) experience possible.
 
 The above learnings was what motivated the creation of `github.com/bwplotka/tracing-go`.
 
 ## Features
 
-* No global state
-* Manual span instrumentation with contextualized tracer and clear error semantics.
-  * You can only create sub-spans from context, (only one way of creating spans).
-* Export of traces to the desired tracing backend or collector:
+* No global state, only `context` based usage.
+* Manual span instrumentation with clear error semantics.
+  * You can only create sub-spans from context (only one way of creating spans).
+* Export of traces (spans) to the desired tracing backend or collector:
   * Using [gRPC OTLP](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/otlp.md) protocol
   * Using Jaeger Thrift Collector, because Jaeger does [not support OTLP yet](https://github.com/jaegertracing/jaeger/issues/3625) 🙃
   * Writing to file e.g. stdout/stderr.
