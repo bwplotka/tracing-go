@@ -150,15 +150,17 @@ func NewTracer(exporter ExporterBuilder, opts ...Option) (*Tracer, func() error,
 	return tr, closeFn, nil
 }
 
-// StartSpan creates a new root span that can add more spans using returned context.
-func (tr *Tracer) StartSpan(spanName string) (context.Context, Span) {
-	sctx, s := tr.tr.Tracer(instrumentationID).Start(context.Background(), spanName)
+// StartSpan creates a new root span that can add more spans using returned context. Returned context
+// is a child from the context passed by argument.
+func (tr *Tracer) StartSpan(ctx context.Context, spanName string) (context.Context, Span) {
+	sctx, s := tr.tr.Tracer(instrumentationID).Start(ctx, spanName)
 	return sctx, &span{Span: s}
 }
 
 // DoInSpan does `f` function that can return error inside span using tracer in the context.
-func (tr *Tracer) DoInSpan(spanName string, f func(context.Context, Span) error) error {
-	sctx, s := tr.StartSpan(spanName)
+// Context in a `f` function is a child from the context passed by argument.
+func (tr *Tracer) DoInSpan(ctx context.Context, spanName string, f func(context.Context, Span) error) error {
+	sctx, s := tr.StartSpan(ctx, spanName)
 	err := f(sctx, s)
 	s.End(err)
 	return err
