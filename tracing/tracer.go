@@ -150,17 +150,34 @@ func NewTracer(exporter ExporterBuilder, opts ...Option) (*Tracer, func() error,
 	return tr, closeFn, nil
 }
 
+// TracerStartSpanOption sets the value in tracerStartSpanOptions.
+type TracerStartSpanOption func(*tracerStartSpanOptions)
+
+type tracerStartSpanOptions struct {
+	ctx context.Context
+}
+
+func WithTracerStartSpanContext(ctx context.Context) TracerStartSpanOption {
+	return func(spanOptions *tracerStartSpanOptions) {
+		spanOptions.ctx = ctx
+	}
+}
+
 // StartSpan creates a new root span that can add more spans using returned context. Returned context
-// is a child from the context passed by argument.
-func (tr *Tracer) StartSpan(ctx context.Context, spanName string) (context.Context, Span) {
-	sctx, s := tr.tr.Tracer(instrumentationID).Start(ctx, spanName)
+func (tr *Tracer) StartSpan(spanName string, opts ...TracerStartSpanOption) (context.Context, Span) {
+	o := tracerStartSpanOptions{ctx: context.Background()}
+
+	for _, opt := range opts {
+		opt(&o)
+	}
+
+	sctx, s := tr.tr.Tracer(instrumentationID).Start(o.ctx, spanName)
 	return sctx, &span{Span: s}
 }
 
 // DoInSpan does `f` function that can return error inside span using tracer in the context.
-// Context in a `f` function is a child from the context passed by argument.
-func (tr *Tracer) DoInSpan(ctx context.Context, spanName string, f func(context.Context, Span) error) error {
-	sctx, s := tr.StartSpan(ctx, spanName)
+func (tr *Tracer) DoInSpan(spanName string, f func(context.Context, Span) error, opts ...TracerStartSpanOption) error {
+	sctx, s := tr.StartSpan(spanName, opts...)
 	err := f(sctx, s)
 	s.End(err)
 	return err

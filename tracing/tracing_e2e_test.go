@@ -55,7 +55,7 @@ func runInstrumentedApp(t *testing.T, jaegerEndpoint string) {
 		testutil.Ok(t, closeFn())
 	})
 
-	ctx, root := tr.StartSpan(context.Background(), "app")
+	ctx, root := tr.StartSpan("app")
 	defer root.End(nil)
 
 	wg := sync.WaitGroup{}
