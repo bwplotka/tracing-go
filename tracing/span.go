@@ -25,6 +25,33 @@ func DoInSpan(ctx context.Context, spanName string, f func(context.Context, Span
 	return err
 }
 
+// Span is the individual component of a trace. It represents a single named
+// and timed operation of a workflow that is traced. A Tracer is used to
+// create a Span and it is then up to the operation the Span represents to
+// properly end the Span when the operation itself ends.
+type Span interface {
+	// End completes the Span. The Span is considered complete and ready to be
+	// delivered through the rest of the telemetry pipeline after this method
+	// is called. Therefore, updates to the Span are not allowed after this
+	// method has been called.
+	// TODO(bwplotka): Add Set status to End options.
+	End(err error)
+
+	// Context returns span context that contains useful information about span and belonging trace.
+	// This information is available even after span End.
+	// NOTE: Do not confuse with Go context.Context which is important, but has to be tracked outside of Span.
+	Context() Context
+
+	// AddEvent adds an event to the span. This was previously (in OpenTracing) known as
+	// structured logs attached to the span.
+	AddEvent(name string, keyvals ...interface{})
+
+	// SetAttributes sets kv as attributes of the Span. If a key from kv
+	// already exists for an attribute of the Span it should be overwritten with
+	// the value contained in kv.
+	SetAttributes(keyvals ...interface{})
+}
+
 type span struct {
 	trace.Span
 }
@@ -38,30 +65,34 @@ func (s *span) End(err error) {
 	s.Span.End()
 }
 
+func (s *span) Context() Context {
+	sctx := s.SpanContext()
+	if !sctx.IsSampled() {
+		return ctx{}
+	}
+	return ctx{
+		traceID: sctx.TraceID().String(),
+		spanID:  sctx.SpanID().String(),
+	}
+
+}
 func (s *span) AddEvent(name string, keyvals ...interface{}) {
 	s.Span.AddEvent(name, trace.WithAttributes(kvToAttr(keyvals...)...))
 }
 
 func (s *span) SetAttributes(keyvals ...interface{}) { s.Span.SetAttributes(kvToAttr(keyvals...)...) }
 
-// Span is the individual component of a trace. It represents a single named
-// and timed operation of a workflow that is traced. A Tracer is used to
-// create a Span and it is then up to the operation the Span represents to
-// properly end the Span when the operation itself ends.
-type Span interface {
-	// End completes the Span. The Span is considered complete and ready to be
-	// delivered through the rest of the telemetry pipeline after this method
-	// is called. Therefore, updates to the Span are not allowed after this
-	// method has been called.
-	// TODO(bwplotka): Add Set status to End options.
-	End(err error)
-
-	// AddEvent adds an event to the span. This was previously (in OpenTracing) known as
-	// structured logs attached to the span.
-	AddEvent(name string, keyvals ...interface{})
-
-	// SetAttributes sets kv as attributes of the Span. If a key from kv
-	// already exists for an attribute of the Span it should be overwritten with
-	// the value contained in kv.
-	SetAttributes(keyvals ...interface{})
+type Context interface {
+	IsSampled() bool
+	TraceID() string
+	SpanID() string
 }
+
+type ctx struct {
+	traceID string
+	spanID  string
+}
+
+func (c ctx) IsSampled() bool { return c.traceID == "" }
+func (c ctx) TraceID() string { return c.traceID }
+func (c ctx) SpanID() string  { return c.spanID }
