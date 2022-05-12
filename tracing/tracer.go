@@ -19,6 +19,17 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
+// NewWriterExporter returns the writer exporter for spans.
+func NewWriterExporter(w io.Writer) ExporterBuilder {
+	return func() (Exporter, error) {
+		e, err := stdouttrace.New(stdouttrace.WithWriter(w))
+		if err != nil {
+			return nil, errors.Wrap(err, "writer exporter creation")
+		}
+		return e, nil
+	}
+}
+
 // Option sets the value of an option for a Config.
 type Option func(*options)
 
@@ -28,19 +39,6 @@ type options struct {
 	newExporterFns []ExporterBuilder
 	sampler        Sampler
 	svcName        string
-}
-
-// WithWriter sets the writer exporter for spans.
-func WithWriter(w io.Writer) Option {
-	return func(o *options) {
-		o.newExporterFns = append(o.newExporterFns, func() (Exporter, error) {
-			e, err := stdouttrace.New(stdouttrace.WithWriter(w))
-			if err != nil {
-				return nil, errors.Wrap(err, "writer exporter creation")
-			}
-			return e, nil
-		})
-	}
 }
 
 // WithExporter sets additional exporter builders for spans. E.g. otlp.Exporter and Thrift
