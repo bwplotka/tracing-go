@@ -23,6 +23,7 @@ The above learnings was what motivated the creation of `github.com/bwplotka/trac
   * Using [gRPC OTLP](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/otlp.md) protocol
   * Using Jaeger Thrift Collector, because Jaeger does [not support OTLP yet](https://github.com/jaegertracing/jaeger/issues/3625) 🙃
   * Writing to file e.g. stdout/stderr.
+* `net/http` instrumentation (check `http` directory with `tracinghttp` package).
 
 This project wraps [multiple https://github.com/open-telemetry/opentelemetry-go](https://github.com/open-telemetry/opentelemetry-go) modules, (almost) fully hiding those from the public interface. Yet, if you import `github.com/bwplotka/tracing-go` module you will transiently import OpenTelemetry modules.
 
@@ -66,12 +67,30 @@ Use `DoInSpan` if you want to do something in the dedicated span.
 ctx, root := tr.StartSpan("app")
 defer root.End(nil)
 
-tracing.DoInSpan(ctx, "sub operation1", func(ctx context.Context, span tracing.Span) error {
+tracing.DoInSpan(ctx, "sub operation1", func(ctx context.Context) error {
 	// ...
 })
-tracing.DoInSpan(ctx, "sub operation2", func(ctx context.Context, span tracing.Span) error { 
+tracing.DoInSpan(ctx, "sub operation2", func(ctx context.Context) error { 
 	// ...
 })
+```
+
+Use `GetSpan` to get current span (without starting) from current context. For example to add attributes to span.
+
+NOTE: It's ONLY `.StartSpan` method caller responsibility to end span.
+
+```go
+// import "github.com/bwplotka/tracing-go/tracing"
+
+ctx, root := tr.StartSpan("app")
+defer root.End(nil)
+
+// ...
+
+anotherCopyOfRootSpan := tracing.GetSpan(ctx)
+anotherCopyOfRootSpan.SetAttributtes("key", "value")
+
+// ...
 ```
 
 See (and run if you want) an [example instrumented application](https://github.com/bwplotka/tracing-go/blob/e4932502118d0cf62706a342c04107b0727cd230/tracing/tracing_e2e_test.go#L78) using our docker based [e2e suite](https://github.com/efficientgo/e2e).  

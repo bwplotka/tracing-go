@@ -18,11 +18,16 @@ func StartSpan(ctx context.Context, spanName string) (context.Context, Span) {
 
 // DoInSpan does `f` function inside span using tracer in the context.
 // WARNING: ctx has to be chained to root Tracer.StartSpan or Tracer.DoInSpan.
-func DoInSpan(ctx context.Context, spanName string, f func(context.Context, Span) error) error {
+func DoInSpan(ctx context.Context, spanName string, f func(context.Context) error) error {
 	sctx, s := StartSpan(ctx, spanName)
-	err := f(sctx, s)
+	err := f(sctx)
 	s.End(err)
 	return err
+}
+
+// GetSpan returns current span or noopSpan if no span was created.
+func GetSpan(ctx context.Context) Span {
+	return &span{Span: trace.SpanFromContext(ctx)}
 }
 
 // Span is the individual component of a trace. It represents a single named

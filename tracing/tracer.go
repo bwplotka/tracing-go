@@ -10,10 +10,8 @@ import (
 	"github.com/efficientgo/tools/core/pkg/errcapture"
 	"github.com/efficientgo/tools/core/pkg/merrors"
 	"github.com/pkg/errors"
-	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/exporters/stdout/stdouttrace"
-	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	"go.opentelemetry.io/otel/trace"
@@ -75,8 +73,7 @@ func WithServiceName(s string) Option {
 // Tracer is the root tracing entity that can enables creation
 // of spans, and its export to the desired backends in a form of traces.
 type Tracer struct {
-	tr   trace.TracerProvider
-	prop propagation.TextMapPropagator
+	tr trace.TracerProvider
 }
 
 // NewTracer creates new instance of Tracer with given exporter builder.
@@ -134,18 +131,9 @@ func NewTracer(exporter ExporterBuilder, opts ...Option) (*Tracer, func() error,
 		tpOpts = append(tpOpts, sdktrace.WithSampler(sdktrace.AlwaysSample()))
 	}
 
-	tr := &Tracer{
+	return &Tracer{
 		tr: sdktrace.NewTracerProvider(tpOpts...),
-		// TODO(bwplotka): Allow different propagations.
-		prop: propagation.NewCompositeTextMapPropagator(propagation.TraceContext{}, propagation.Baggage{}),
-	}
-
-	// Globals kill people, but some tools still use those.
-	// TODO(bwplotka): Do we really need this?
-	otel.SetTracerProvider(tr.tr)
-	otel.SetTextMapPropagator(tr.prop)
-
-	return tr, closeFn, nil
+	}, closeFn, nil
 }
 
 // TracerStartSpanOption sets the value in tracerStartSpanOptions.
@@ -174,9 +162,9 @@ func (tr *Tracer) StartSpan(spanName string, opts ...TracerStartSpanOption) (con
 }
 
 // DoInSpan does `f` function that can return error inside span using tracer in the context.
-func (tr *Tracer) DoInSpan(spanName string, f func(context.Context, Span) error, opts ...TracerStartSpanOption) error {
+func (tr *Tracer) DoInSpan(spanName string, f func(context.Context) error, opts ...TracerStartSpanOption) error {
 	sctx, s := tr.StartSpan(spanName, opts...)
-	err := f(sctx, s)
+	err := f(sctx)
 	s.End(err)
 	return err
 }

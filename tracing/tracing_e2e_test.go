@@ -28,11 +28,11 @@ func dummyOperation(ctx context.Context) (err error) {
 		_ = fmt.Sprintf("doing stuff! %+v", alloc)
 	}
 
-	_ = tracing.DoInSpan(ctx, "sub operation1", func(ctx context.Context, span tracing.Span) error {
+	_ = tracing.DoInSpan(ctx, "sub operation1", func(ctx context.Context) error {
 		time.Sleep(1200 * time.Millisecond)
 		return nil
 	})
-	_ = tracing.DoInSpan(ctx, "sub operation2", func(ctx context.Context, span tracing.Span) error {
+	_ = tracing.DoInSpan(ctx, "sub operation2", func(ctx context.Context) error {
 		time.Sleep(300 * time.Millisecond)
 		return nil
 	})
@@ -70,6 +70,8 @@ func runInstrumentedApp(t *testing.T, jaegerEndpoint string) {
 }
 
 func TestTracingOTLPWithJaeger(t *testing.T) {
+	t.Skip("interactive test, comment this out before running")
+
 	e, err := e2e.NewDockerEnvironment("e2e_otlp")
 	testutil.Ok(t, err)
 	t.Cleanup(e.Close)
