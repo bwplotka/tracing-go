@@ -98,6 +98,6 @@ type ctx struct {
 	spanID  string
 }
 
-func (c ctx) IsSampled() bool { return c.traceID == "" }
+func (c ctx) IsSampled() bool { return c.traceID != "" }
 func (c ctx) TraceID() string { return c.traceID }
 func (c ctx) SpanID() string  { return c.spanID }
