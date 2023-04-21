@@ -14,11 +14,10 @@ import (
 // The "go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp" module instruments many too things.
 // Here we want to just focus on tracing.
 type Tripperware struct {
-	tracer *tracing.Tracer
 }
 
-func NewTripperware(tracer *tracing.Tracer) *Middleware {
-	return &Middleware{tracer: tracer}
+func NewTripperware() *Tripperware {
+	return &Tripperware{}
 }
 
 type rtFunc func(*http.Request) (*http.Response, error)
@@ -27,13 +26,11 @@ func (rt rtFunc) RoundTrip(r *http.Request) (*http.Response, error) {
 	return rt(r)
 }
 
-func (m *Middleware) WrapRoundTipper(name string, next http.RoundTripper) http.RoundTripper {
+func (Tripperware) WrapRoundTipper(name string, next http.RoundTripper) http.RoundTripper {
 	propagator := propagation.NewCompositeTextMapPropagator(propagation.TraceContext{}, propagation.Baggage{})
 
 	return rtFunc(func(r *http.Request) (*http.Response, error) {
-		ctx, span := m.tracer.StartSpan(name, tracing.WithTracerStartSpanContext(
-			propagator.Extract(r.Context(), propagation.HeaderCarrier(r.Header))),
-		)
+		ctx, span := tracing.StartSpan(r.Context(), name)
 		span.SetAttributes(attrToKv(semconv.NetAttributesFromHTTPRequest("tcp", r)...))
 		span.SetAttributes(attrToKv(semconv.EndUserAttributesFromHTTPRequest(r)...))
 		span.SetAttributes(attrToKv(semconv.HTTPServerAttributesFromHTTPRequest(name, "", r)...))
@@ -54,6 +51,7 @@ func (m *Middleware) WrapRoundTipper(name string, next http.RoundTripper) http.R
 			span.AddEvent("read", string(otelhttp.ReadBytesKey), n)
 		}
 		res.Body = &bw
+		span.End(nil)
 		return res, nil
 	})
 }
